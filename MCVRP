@@ -1,0 +1,288 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Dec  9 18:21:54 2018
+
+@author: pc
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+import math as mt
+
+loc_x=[5,2,3,4,4.5,6,7,3.5,4.8,5.2,6.3,6.1,7.2]
+loc_y=[4.1,2,1,2.3,3,2.5,2.4,5,4,6,4.5,5.5,6.5]
+liste_noeuds=[[5,4],[2,2],[3,1],[4,2],[3,3],[6,2],[7,2],[3,5],[4,4],[5,6],[6,4],[6,5],[7,5]]
+plt.scatter(loc_x[1:],loc_y[1:])
+plt.plot(loc_x[0],loc_y[0],c='r',marker='s')
+nombre_veh=4
+capacite_veh=[14,14]
+for i in range(1,13):
+        demande1=[0,2,4,2,6,4,2,2,6,8,2,2,4]
+        demande2=[0,4,2,6,2,8,6,6,4,4,4,4,6]
+        plt.annotate('d1_%d=%d'%(i,demande1[i]),(loc_x[i]+0.2,loc_y[i]))
+        plt.annotate('d2_%d=%d'%(i,demande2[i]),(loc_x[i]+0.2,loc_y[i]+0.4))
+
+
+
+mat_cout=np.zeros((13,13))
+for i in range(0,13):
+    for j in range(0,13):
+        x=loc_x[i]-loc_x[j]
+        y=loc_y[i]-loc_y[j]
+        a=mt.sqrt((x*x)+(y*y))
+        mat_cout[i][j]=a
+
+
+#Génerer la solution initial par la méthode GREEDY
+trajet_1=[]
+for i in range(0,13):
+    if mat_cout[0][i]>a:
+       a=mat_cout[0][i]
+       b=i
+trajet_1.append(b)
+
+clients=[1,2,3,4,5,6,7,8,9,10,11,12]
+demande_1=demande1[b]
+demande_2=demande2[b]
+clients.remove(2)
+for i in range(1,13):    
+    if demande_1<capacite_veh[0]:
+        if demande_2<capacite_veh[1]:
+            demande_1=demande_1+demande1[i]
+            demande_2=demande_2+demande2[i]
+            if i not in trajet_1:
+                trajet_1.append(i)
+                clients.remove(i)
+                
+trajet_2=[clients[0]]
+demande_3=demande1[clients[0]]
+demande_4=demande2[clients[0]]
+clients.remove(clients[0])
+for i in clients:    
+    if demande_3<capacite_veh[0]:
+        if demande_4<capacite_veh[1]:
+            demande_3=demande_3+demande1[i]
+            demande_4=demande_4+demande2[i]
+            if i not in trajet_2:
+                if i not in trajet_1:
+                     trajet_2.append(i)
+                     clients.remove(i)
+                    
+               
+trajet_3=[clients[0]]
+demande_5=demande1[clients[0]]
+demande_6=demande2[clients[0]]
+clients.remove(clients[0])
+for i in clients:    
+    if demande_5<capacite_veh[0]:
+        if demande_6<capacite_veh[1]:
+            demande_5=demande_5+demande1[i]
+            demande_6=demande_6+demande2[i]
+            if i not in trajet_3:
+                if i not in trajet_1:
+                    if i not in trajet_2:
+                        trajet_3.append(i)
+                        clients.remove(i)
+
+
+trajet_4=[clients[0]] 
+demande_7=demande1[clients[0]]                       
+demande_8=demande2[clients[0]]                                     
+clients.remove(clients[0])
+for i in clients:
+    if demande_7<capacite_veh[0]:
+        if demande_8<capacite_veh[1]:
+            demande_7=demande_7+demande1[i]
+            demande_8=demande_8+demande2[i]
+            if i not in trajet_4:
+                if i not in trajet_3:
+                    if i not in trajet_2:
+                        if i not in trajet_1:
+                            trajet_4.append(i)
+                            clients.remove(i)
+                            
+trajet_4.append(clients[0])                        
+            
+       
+       
+trajet_1.insert(0,0)
+trajet_1.append(0)
+trajet_2.insert(0,0)
+trajet_2.append(0)
+trajet_3.insert(0,0)
+trajet_3.append(0)               
+trajet_4.insert(0,0)
+trajet_4.append(0)
+
+trajet=[]
+trajet.append(trajet_1)
+trajet.append(trajet_2)
+trajet.append(trajet_3)    
+trajet.append(trajet_4)              
+            
+        
+cout1=0
+for i in range(0,4):
+    cout1=cout1+mat_cout[trajet_1[i]][trajet_1[i+1]]
+        
+cout2=0
+for i in range(0,4):
+    cout2=cout2+mat_cout[trajet_2[i]][trajet_2[i+1]]    
+    
+cout3=0
+for i in range(0,4):
+    cout3=cout3+mat_cout[trajet_3[i]][trajet_3[i+1]]    
+    
+cout4=0
+for i in range(0,4):
+    cout4=cout4+mat_cout[trajet_4[i]][trajet_4[i+1]]    
+    
+cout_global=cout1+cout2+cout3+cout4
+
+
+
+#Créer une liste "classification" qui contient toutes les permutations possibles entre les clients des tournées sachant qu'une permutation
+n'est permise que si la difference entre les demandes d'un client[i] et un client[j]<= 2 pour la demande1 et la demande 2
+
+classification1=[]                
+for i in range(0,13):
+    for j in range(0,12):
+        if i not in classification1:
+           if j+1 not in classification1:
+               if abs(demande1[i]-demande1[j+1])<=2:
+                  if abs(demande2[i]-demande2[j+1])<=2:
+                     if i!=j+1:
+                        n=[i,j+1]
+                        classification1.append(n)
+                        
+
+
+classification=classification1
+for i in range(0,len(classification1)):
+    for j in range(1,len(classification1)):
+        if classification1[i][0] in classification1[j]:
+           if classification1[i][1] in classification1[j]:
+               classification.remove(classification1[i])
+          
+
+
+                   
+
+
+
+
+#permet de retourner le trajet auquel appartient le client
+def position_client(l):
+    k=[]
+    for i in range(0,len(trajet)):
+        for j in range(0,len(trajet[i])):
+            if l==trajet[i][j]:
+                k=trajet[i]
+    return k 
+
+           
+#permet de retourner la position de client dans le trajet   
+def position_route(l,k):
+    h=0
+    for i in range(0,len(k)):
+        if l==k[i]:
+            h=i
+    return h
+
+
+def fonction(noeud):
+    y1=position_client(noeud[0])
+    y2=position_client(noeud[1])
+    if y1==y2:
+       classification.remove(noeud)
+    
+    return classification
+    
+              
+    
+for i in range(0,len(classification)):
+    f=fonction(classification[i])
+    
+    
+#permet de retourner le trajet auquel ils appartiennent  les elements des noeuds 
+def permuter(noeud):
+    z=[]
+    for i in range(0,2):
+        m=position_client(noeud[i])
+        j=position_route(noeud[i],m)
+        z.append(j)
+    return z 
+
+    
+    
+                                   
+def cout_chemin(chemin):
+    cout=0            
+    for i in range(0,len(chemin)-1):
+        cout=cout+mat_cout[chemin[i]][chemin[i+1]]
+    return cout
+    
+
+# Permet d'effectuer la permutation entre les noeuds selectionnés et de calculer le nouveau cout généré et le comparer à celui
+  de la solution initial
+def comparer_cout(noeud):
+    
+    route1=position_client(noeud[0])
+    route2=position_client(noeud[1])
+    permutation=permuter(noeud)
+    route1.insert(permutation[0],noeud[1])
+    route2.insert(permutation[1],noeud[0])
+    route1.remove(noeud[0])
+    route2.remove(noeud[1])
+    
+#Boucle qui permet de parcourir toute la liste de la classification , effectuer les permutations possibles et afficher les trajets
+et leurs couts qui génerent un cout inferieur à celui de la solution initiale.
+
+for i in range(0,len(classification)):
+    comparer_cout(classification[i])
+    cout9=0 
+    for j in range(0,len(trajet)):
+        cout9=cout9+cout_chemin(trajet[j])
+    if cout9<cout_global:
+       print(trajet)
+       print(cout9)           
+
+
+
+#Dessiner les tournées de la solution finale générée 
+loc_x1=[]
+loc_y1=[]
+
+for i in range(0,5):
+    loc_x1.append(loc_x[trajet_1[i]])
+    loc_y1.append(loc_y[trajet_1[i]])
+
+plt.plot(loc_x1,loc_y1)
+
+loc_x2=[]
+loc_y2=[]
+
+for i in range(0,5):
+    loc_x2.append(loc_x[trajet_2[i]])
+    loc_y2.append(loc_y[trajet_2[i]])
+
+loc_x3=[]
+loc_y3=[]
+
+for i in range(0,5):
+    loc_x3.append(loc_x[trajet_3[i]])
+    loc_y3.append(loc_y[trajet_3[i]])
+
+loc_x4=[]
+loc_y4=[]
+
+for i in range(0,5):
+    loc_x4.append(loc_x[trajet_4[i]])
+    loc_y4.append(loc_y[trajet_4[i]])
+    
+locx=[loc_x1,loc_x2,loc_x3,loc_x4]
+locy=[loc_y1,loc_y2,loc_y3,loc_y4]
+for i in range(0,4):
+    plt.plot(locx[i],locy[i])
+    for j in range(0,5):
+       plt.scatter(locx[i][j],locy[i][j]) 
